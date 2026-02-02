@@ -1,0 +1,11 @@
+{
+  "id": "python-tool-allowlist",
+  "title": "Tool allowlist + argument validation",
+  "language": "python",
+  "tags": [
+    "agent",
+    "tools",
+    "least-privilege"
+  ],
+  "description": "Maps model-chosen actions to allowlisted functions with explicit validation."
+}

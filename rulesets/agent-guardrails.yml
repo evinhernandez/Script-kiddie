@@ -1,0 +1,34 @@
+rules:
+  - id: SK-AGENT-002
+    title: "Model output used directly in network/HTTP request construction"
+    category: "agent-security"
+    severity: "high"
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    keywords: ["http", "fetch", "requests"]
+    patterns:
+      - "\bfetch\(.*(llm|model|completion|response).*\)"
+      - "\brequests\.(get|post|put|delete)\(.*(llm|model|completion|response).*\)"
+    message: "Model output may be used to construct outbound requests."
+    remediation: "Validate/normalize URLs, restrict domains via allowlists, and enforce egress policy."
+
+  - id: SK-AGENT-003
+    title: "Prompt injection: untrusted content appended without separation/quoting"
+    category: "agent-security"
+    severity: "medium"
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    patterns:
+      - "(system\s*[:=].*\+\s*user_input)"
+      - "(prompt\s*[:=].*\+\s*(request|req|input|message))"
+    message: "Untrusted content may be concatenated into prompts without structured separation."
+    remediation: "Use structured templates, delimiters, and treat external content as quoted data. Consider context isolation."
+
+  - id: SK-NHI-002
+    title: "Long-lived NHI credentials without rotation indicator"
+    category: "nhi-security"
+    severity: "medium"
+    file_globs: ["**/*.yaml", "**/*.yml", "**/*.json", "**/*.md", "**/*.py", "**/*.ts", "**/*.js"]
+    patterns:
+      - "\b(token\s*(ttl|expires)\s*[:=]\s*(0|never|infinite)\b"
+      - "\b(rotation\s*[:=]\s*false\b"
+    message: "Credential configuration suggests long-lived tokens or rotation disabled."
+    remediation: "Prefer short TTL, automatic rotation, scoped tokens, and workload identity."

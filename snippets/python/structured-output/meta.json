@@ -1,0 +1,11 @@
+{
+  "id": "python-structured-output",
+  "title": "Structured output enforcement (JSON schema)",
+  "language": "python",
+  "tags": [
+    "llm",
+    "guardrails",
+    "structured-output"
+  ],
+  "description": "Example wrapper enforcing JSON-only output with schema validation before use."
+}

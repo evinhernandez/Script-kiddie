@@ -1,0 +1,14 @@
+policy:
+  id: default
+  title: "Default policy"
+  description: "Block on critical findings or judge block with high confidence."
+
+  # Static scan gates
+  block_if_severity_at_or_above: "critical"
+
+  # AI judge gates
+  judge_block_confidence_threshold: 0.75
+  require_consensus_to_allow: false
+
+  # Output decision ordering
+  decisions: ["block", "manual_review", "allow"]

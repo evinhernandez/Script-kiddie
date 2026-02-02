@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling>=1.22.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "scriptkiddie-cli"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+scriptkiddie = "scriptkiddie_cli.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/scriptkiddie_cli"]

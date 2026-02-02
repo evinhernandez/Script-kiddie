@@ -1,0 +1,31 @@
+rules:
+  - id: SK-MCP-001
+    title: "MCP server without auth/ACL indicator"
+    category: "mcp-security"
+    severity: "high"
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts", "**/*.yaml", "**/*.yml", "**/*.json"]
+    patterns:
+      - "\b(mcp|model\s*context\s*protocol)\b.*\b(server|serve|listener)\b"
+      - "\b(no\s*auth|unauthenticated|public\s*endpoint)\b"
+    message: "MCP server configuration may be missing authentication/ACL controls."
+    remediation: "Require auth, enforce per-tool/per-resource ACLs, and bind to localhost/private networks by default."
+
+  - id: SK-MCP-002
+    title: "MCP tool exposure: wildcard/allow-all"
+    category: "mcp-security"
+    severity: "high"
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    patterns:
+      - "\b(allow\s*all\s*tools|tools\s*:\s*\*|tool\s*allowlist\s*:\s*\*)\b"
+    message: "Tool allowlist appears to be wildcard or allow-all."
+    remediation: "Use explicit allowlists and require per-tool authorization checks."
+
+  - id: SK-MCP-003
+    title: "MCP server bound to 0.0.0.0 without explicit guard"
+    category: "mcp-security"
+    severity: "medium"
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts", "**/*.yaml", "**/*.yml"]
+    patterns:
+      - "\b(host|bind)\s*[:=]\s*['\"]0\.0\.0\.0['\"]"
+    message: "Service may be exposed on all interfaces."
+    remediation: "Bind to localhost/private interface by default; document ingress controls and authentication."
