@@ -8,9 +8,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <div className="max-w-6xl mx-auto p-6">
           <header className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold">Script-kiddie</h1>
-              <p className="text-zinc-400">Rules + Ollama judges + policy-as-code</p>
+            <div className="flex items-center gap-3">
+              <img
+                src="/logo.png"
+                alt="Script-kiddie logo"
+                className="h-11 w-11 rounded-xl border border-zinc-800 bg-zinc-950 object-cover"
+              />
+              <div>
+                <h1 className="text-2xl font-bold">Script-kiddie</h1>
+                <p className="text-zinc-400">Rules + Ollama judges + policy-as-code</p>
+              </div>
             </div>
             <nav className="flex gap-4 text-sm">
               <a href="/">Dashboard</a>
