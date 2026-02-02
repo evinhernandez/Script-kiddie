@@ -34,6 +34,7 @@ services:
     ports: ["8000:8000"]
     volumes:
       - ..:/workspace
+      - "/Users/ehernandez/Library/Mobile Documents/com~apple~CloudDocs/Script Kiddie/script-kiddie:/scan"
 
   worker:
     build:
@@ -45,6 +46,7 @@ services:
     depends_on: [api, redis, postgres, ollama]
     volumes:
       - ..:/workspace
+      - "/Users/ehernandez/Library/Mobile Documents/com~apple~CloudDocs/Script Kiddie/script-kiddie:/scan"
 
   web:
     build:
@@ -57,6 +59,7 @@ services:
     ports: ["3000:3000"]
     volumes:
       - ../apps/web:/app
+      - /app/node_modules
 
 volumes:
   pgdata:

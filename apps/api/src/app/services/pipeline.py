@@ -24,12 +24,18 @@ def run_pipeline(payload: dict) -> dict:
             return {"error": "job not found"}
         job.status = "running"
         job.policy_path = job.policy_path or POLICY_PATH
+        target_path = job.target_path
+        ruleset_rel = job.ruleset
+        ai_review_enabled = job.ai_review
+        policy_rel = job.policy_path
         db.commit()
 
     audit_log(job_id, "job_started", {"job_id": job_id})
 
-    root = Path(job.target_path).resolve()
-    ruleset_path = Path("/workspace") / job.ruleset
+    root = Path(target_path).resolve()
+    ruleset_path = Path("/workspace") / ruleset_rel
+    policy_path = Path("/workspace") / (policy_rel or POLICY_PATH)
+    policy = load_policy(policy_path)
 
     # 1) Static scan
     findings_models = static_scan(root=root, ruleset_path=ruleset_path, max_file_kb=512)
@@ -56,7 +62,7 @@ def run_pipeline(payload: dict) -> dict:
 
     # 2) AI review (Ollama)
     ai_review = None
-    if job.ai_review:
+    if ai_review_enabled:
         provider = OllamaProvider(base_url=OLLAMA_BASE_URL)
         artifact = summarize_target(root)
 
@@ -83,10 +89,17 @@ Artifact:
             JudgeConfig(provider=provider, model=OLLAMA_MODEL_JUDGE),
         ]
 
+        block_thr = float(policy.get("judge_block_confidence_threshold", 0.75))
+        allow_thr = float(policy.get("judge_allow_confidence_threshold", block_thr))
+        require_consensus = bool(policy.get("require_consensus_to_allow", False))
+
         ai_review = run_multi_judge(
             artifact=artifact,
             findings=[{"rule_id": f.get("rule_id"), "severity": f.get("severity"), "title": f.get("title")} for f in findings],
-            judges=judges
+            judges=judges,
+            block_threshold=block_thr,
+            allow_threshold=allow_thr,
+            require_consensus_to_allow=require_consensus,
         )
 
         # Persist judge results
@@ -97,7 +110,6 @@ Artifact:
         audit_log(job_id, "judge_done", {"aggregate": ai_review.get("aggregate")})
 
     # 3) Policy decision
-    policy = load_policy(Path("/workspace") / (job.policy_path or POLICY_PATH))
     decision = evaluate(policy, findings, (ai_review or {}).get("aggregate") if ai_review else None)
 
     with SessionLocal() as db:

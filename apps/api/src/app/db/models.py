@@ -46,7 +46,7 @@ class ModelCall(Base):
     role: Mapped[str] = mapped_column(String(32))  # analyzer|judge
     request_hash: Mapped[str] = mapped_column(String(64))
     response_excerpt: Mapped[str] = mapped_column(Text)
-    parsed: Mapped[dict] = mapped_column(JSON, default={})
+    parsed: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[str] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     job = relationship("Job", back_populates="model_calls")
@@ -56,7 +56,7 @@ class AuditEvent(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     job_id: Mapped[str] = mapped_column(String(64), ForeignKey("jobs.id"), index=True)
     event_type: Mapped[str] = mapped_column(String(64))
-    details: Mapped[dict] = mapped_column(JSON, default={})
+    details: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[str] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     job = relationship("Job", back_populates="audit_events")

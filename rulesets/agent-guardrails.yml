@@ -6,8 +6,8 @@ rules:
     file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
     keywords: ["http", "fetch", "requests"]
     patterns:
-      - "\bfetch\(.*(llm|model|completion|response).*\)"
-      - "\brequests\.(get|post|put|delete)\(.*(llm|model|completion|response).*\)"
+      - '\bfetch\(.*(llm|model|completion|response).*\)'
+      - '\brequests\.(get|post|put|delete)\(.*(llm|model|completion|response).*\)'
     message: "Model output may be used to construct outbound requests."
     remediation: "Validate/normalize URLs, restrict domains via allowlists, and enforce egress policy."
 
@@ -17,8 +17,8 @@ rules:
     severity: "medium"
     file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
     patterns:
-      - "(system\s*[:=].*\+\s*user_input)"
-      - "(prompt\s*[:=].*\+\s*(request|req|input|message))"
+      - '(system\s*[:=].*\+\s*user_input)'
+      - '(prompt\s*[:=].*\+\s*(request|req|input|message))'
     message: "Untrusted content may be concatenated into prompts without structured separation."
     remediation: "Use structured templates, delimiters, and treat external content as quoted data. Consider context isolation."
 
@@ -28,7 +28,7 @@ rules:
     severity: "medium"
     file_globs: ["**/*.yaml", "**/*.yml", "**/*.json", "**/*.md", "**/*.py", "**/*.ts", "**/*.js"]
     patterns:
-      - "\b(token\s*(ttl|expires)\s*[:=]\s*(0|never|infinite)\b"
-      - "\b(rotation\s*[:=]\s*false\b"
+      - '\b(token\s*(ttl|expires)\s*[:=]\s*(0|never|infinite))\b'
+      - '\b(rotation\s*[:=]\s*false)\b'
     message: "Credential configuration suggests long-lived tokens or rotation disabled."
     remediation: "Prefer short TTL, automatic rotation, scoped tokens, and workload identity."
