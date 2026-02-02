@@ -1,6 +1,6 @@
 # Script-kiddie
 
-Script-kiddie is an open-source platform for **AI governance, testing, guardrails, and security assessments**
+Script-kiddie is an open-source platform for Vibe Coders and Vibe Engineers that assist in **AI governance, testing, guardrails, and security assessments**
 for LLM apps, agent frameworks, MCP servers, and non-human identities.
 
 This repo is an **MVP platform** that ships:
