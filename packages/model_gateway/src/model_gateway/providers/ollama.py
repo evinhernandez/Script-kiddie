@@ -1,12 +1,11 @@
 from __future__ import annotations
-import os
-import requests
-from pydantic import BaseModel
-from typing import Optional, Dict, Any
 
-class ModelResponse(BaseModel):
-    text: str
-    raw: Optional[Dict[str, Any]] = None
+import os
+
+import requests
+
+from .base import ModelResponse, TokenUsage
+
 
 class OllamaProvider:
     name = "ollama"
@@ -22,4 +21,10 @@ class OllamaProvider:
         r = requests.post(f"{self.base_url}/api/generate", json=payload, timeout=self.timeout_s)
         r.raise_for_status()
         data = r.json()
-        return ModelResponse(text=data.get("response", ""), raw=data)
+        usage = None
+        if "prompt_eval_count" in data or "eval_count" in data:
+            usage = TokenUsage(
+                prompt_tokens=data.get("prompt_eval_count", 0),
+                completion_tokens=data.get("eval_count", 0),
+            )
+        return ModelResponse(text=data.get("response", ""), raw=data, usage=usage)

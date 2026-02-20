@@ -1,0 +1,39 @@
+rules:
+  - id: SK-TENANT-001
+    title: "Shared model context across tenants"
+    category: "tenant-isolation"
+    severity: "critical"
+    cwe_ids: ["CWE-668"]
+    owasp_ids: ["LLM07"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    keywords: ["tenant", "context", "session", "memory"]
+    patterns:
+      - '\b(global|shared|singleton)\b.*\b(context|memory|history|conversation|session)\b(?!.*\b(tenant|user|namespace|scope)\b)'
+    message: "Model context or conversation history may be shared across tenants."
+    remediation: "Scope all conversation state by tenant ID. Use separate memory stores or namespaced keys per tenant."
+
+  - id: SK-TENANT-002
+    title: "Unscoped vector database queries"
+    category: "tenant-isolation"
+    severity: "high"
+    cwe_ids: ["CWE-639"]
+    owasp_ids: ["LLM07"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    keywords: ["query", "search", "similarity", "vector"]
+    patterns:
+      - '\b(similarity_search|query|search)\b(?!.*\b(filter|where|tenant|namespace|collection)\b)'
+    message: "Vector DB query does not appear to filter by tenant."
+    remediation: "Always include tenant ID in vector DB queries via metadata filters or separate collections per tenant."
+
+  - id: SK-TENANT-003
+    title: "Shared memory/cache without namespace isolation"
+    category: "tenant-isolation"
+    severity: "high"
+    cwe_ids: ["CWE-668"]
+    owasp_ids: ["LLM07"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    keywords: ["redis", "cache", "memory", "store"]
+    patterns:
+      - '\b(redis|cache|memcache)\b.*\b(set|get|put)\b.*\b(key|name)\s*[:=]\s*[''"](?!.*tenant)(?!.*user)(?!.*namespace)'
+    message: "Cache/memory store appears to use keys without tenant namespace isolation."
+    remediation: "Prefix all cache keys with tenant ID. Use separate Redis databases or key namespaces per tenant."

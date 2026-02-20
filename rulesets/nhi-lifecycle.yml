@@ -1,0 +1,41 @@
+rules:
+  - id: SK-NHI-003
+    title: "Overprivileged service account or IAM role"
+    category: "nhi-security"
+    severity: "high"
+    cwe_ids: ["CWE-250"]
+    owasp_ids: ["LLM07"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts", "**/*.yml", "**/*.yaml", "**/*.json", "**/*.tf"]
+    keywords: ["admin", "role", "policy", "permission"]
+    patterns:
+      - '\b(AdministratorAccess|PowerUserAccess|\*:\*|Action.*\*.*Resource.*\*)\b'
+      - '\brole\s*[:=]\s*[''"].*admin.*[''"]'
+      - '\bpermissions?\s*[:=]\s*\[?\s*[''"]?\*[''"]?\s*\]?'
+    message: "Service account or role appears overprivileged."
+    remediation: "Apply least-privilege principle. Scope IAM roles to specific resources and actions needed."
+
+  - id: SK-NHI-004
+    title: "OAuth client secret in source code"
+    category: "nhi-security"
+    severity: "critical"
+    cwe_ids: ["CWE-798"]
+    owasp_ids: ["LLM07"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts", "**/*.env", "**/*.yml", "**/*.yaml"]
+    patterns:
+      - '\b(client_secret|oauth_secret|OAUTH_CLIENT_SECRET)\s*[:=]\s*[''"][A-Za-z0-9_\-]{8,}[''"]'
+    message: "OAuth client secret appears hardcoded in source."
+    remediation: "Store OAuth secrets in a vault or secrets manager. Use workload identity where available."
+
+  - id: SK-NHI-005
+    title: "Missing mTLS or workload attestation"
+    category: "nhi-security"
+    severity: "medium"
+    cwe_ids: ["CWE-295"]
+    owasp_ids: ["LLM07"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts", "**/*.yml", "**/*.yaml"]
+    keywords: ["service", "client", "grpc", "http"]
+    patterns:
+      - '\b(insecure|verify\s*=\s*False|tls\s*[:=]\s*false|NODE_TLS_REJECT_UNAUTHORIZED\s*=\s*[''"]0[''"])\b'
+      - '\b(grpc\.insecure_channel|http://(?!localhost|127\.0\.0\.1))\b'
+    message: "Service communication lacks mTLS or proper TLS verification."
+    remediation: "Enable mTLS between services. Use workload identity attestation for service-to-service auth."

@@ -1,0 +1,54 @@
+rules:
+  - id: SK-RAG-001
+    title: "Unvalidated document ingestion into RAG pipeline"
+    category: "rag-security"
+    severity: "high"
+    cwe_ids: ["CWE-20"]
+    owasp_ids: ["LLM06"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    keywords: ["ingest", "loader", "add_documents", "from_documents"]
+    patterns:
+      - '\b(ingest|load_documents?|add_documents?|from_documents?)\b.*\b(url|path|file|input|request)\b'
+      - '\b(DirectoryLoader|UnstructuredFileLoader|WebBaseLoader)\b'
+    message: "Documents are ingested into a RAG pipeline without apparent validation or sanitization."
+    remediation: "Validate document sources, sanitize content before embedding, and implement provenance tracking."
+
+  - id: SK-RAG-002
+    title: "Missing provenance tracking for embedded documents"
+    category: "rag-security"
+    severity: "medium"
+    cwe_ids: ["CWE-346"]
+    owasp_ids: ["LLM06"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    keywords: ["embed", "vector", "chunk"]
+    patterns:
+      - '\b(embed|add_texts|from_texts)\b(?!.*\b(metadata|source|provenance)\b)'
+    message: "Embeddings are created without provenance metadata."
+    remediation: "Attach source metadata (origin URL, author, timestamp, hash) to every embedded chunk."
+
+  - id: SK-RAG-003
+    title: "Unsanitized content passed to embedding model"
+    category: "rag-security"
+    severity: "medium"
+    cwe_ids: ["CWE-79"]
+    owasp_ids: ["LLM06"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    keywords: ["embed", "encode"]
+    patterns:
+      - '\b(embed|encode)\s*\(.*\b(user_input|request|raw|untrusted)\b'
+    message: "Untrusted content is passed directly to an embedding model without sanitization."
+    remediation: "Sanitize and normalize content before embedding. Strip control characters and injection patterns."
+
+  - id: SK-RAG-004
+    title: "Exposed vector database endpoint"
+    category: "rag-security"
+    severity: "high"
+    cwe_ids: ["CWE-284"]
+    owasp_ids: ["LLM06"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts", "**/*.yml", "**/*.yaml", "**/*.env"]
+    keywords: ["chroma", "pinecone", "weaviate", "qdrant", "milvus"]
+    patterns:
+      - '\b(CHROMA|PINECONE|WEAVIATE|QDRANT|MILVUS).*\b(HOST|URL|ENDPOINT)\b.*\b(0\.0\.0\.0|public|external)\b'
+      - '\b(host|bind)\s*[:=]\s*[''"]0\.0\.0\.0[''"].*\b(chroma|pinecone|weaviate|qdrant|milvus)\b'
+    message: "Vector database appears to be exposed on a public interface."
+    remediation: "Bind vector DB to private network, require authentication, and restrict access to authorized services only."

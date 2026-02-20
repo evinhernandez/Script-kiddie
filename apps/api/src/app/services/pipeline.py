@@ -1,19 +1,20 @@
 from __future__ import annotations
-import os, json, hashlib
+
+import hashlib
+import os
 from pathlib import Path
-from sqlalchemy.orm import Session
 
 from app.config import OLLAMA_BASE_URL, OLLAMA_MODEL_ANALYZER, OLLAMA_MODEL_JUDGE, POLICY_PATH
+from app.db.models import Finding, Job, ModelCall
 from app.db.session import SessionLocal
-from app.db.models import Job, Finding, ModelCall
 from app.services.audit import log as audit_log
-from app.services.policy import load_policy, evaluate
-
-from scriptkiddie_core.scanner import scan as static_scan
-from scriptkiddie_core.sarif import to_sarif
-
-from model_gateway.providers.ollama import OllamaProvider
+from app.services.policy import evaluate, load_policy
 from model_gateway.orchestrator import JudgeConfig, run_multi_judge
+from model_gateway.pricing import estimate_cost
+from model_gateway.registry import load_providers
+from scriptkiddie_core.sarif import to_sarif
+from scriptkiddie_core.scanner import scan as static_scan
+
 
 def run_pipeline(payload: dict) -> dict:
     job_id = payload["job_id"]
@@ -54,18 +55,25 @@ def run_pipeline(payload: dict) -> dict:
                 line=f.line,
                 match=f.match,
                 message=f.message,
-                remediation=f.remediation
+                remediation=f.remediation,
             ))
         db.commit()
 
     audit_log(job_id, "static_scan_done", {"count": len(findings)})
 
-    # 2) AI review (Ollama)
+    # 2) AI review (multi-provider)
     ai_review = None
     if ai_review_enabled:
-        provider = OllamaProvider(base_url=OLLAMA_BASE_URL)
+        # Load providers from config or fall back to Ollama
+        providers = load_providers(
+            config_path=os.getenv("PROVIDERS_CONFIG_PATH")
+        )
+
+        # Default: use Ollama as before
+        default_provider = providers.get("ollama") or next(iter(providers.values()))
         artifact = summarize_target(root)
 
+        analyzer_model = OLLAMA_MODEL_ANALYZER
         analyzer_prompt = f"""You are a secure coding reviewer.
 Analyze the artifact excerpt for AI/agent security issues:
 - executing model output
@@ -78,15 +86,26 @@ Keep it short and actionable.
 Artifact:
 {artifact[:7000]}
 """
-        analyzer_resp = provider.generate(OLLAMA_MODEL_ANALYZER, prompt=analyzer_prompt, system="You are a security reviewer.")
-        _store_model_call(job_id, provider="ollama", model=OLLAMA_MODEL_ANALYZER, role="analyzer",
-                          request=analyzer_prompt, response=analyzer_resp.text, parsed={})
-        audit_log(job_id, "analyzer_done", {"model": OLLAMA_MODEL_ANALYZER})
+        analyzer_resp = default_provider.generate(
+            analyzer_model, prompt=analyzer_prompt, system="You are a security reviewer."
+        )
+        _store_model_call(
+            job_id,
+            provider=default_provider.name,
+            model=analyzer_model,
+            role="analyzer",
+            request=analyzer_prompt,
+            response=analyzer_resp.text,
+            parsed={},
+            usage=analyzer_resp.usage,
+        )
+        audit_log(job_id, "analyzer_done", {"model": analyzer_model})
 
-        # Judges: self-consistency (same model twice) — you can add more models later
+        # Build judges from config or default self-consistency
+        judge_model = OLLAMA_MODEL_JUDGE
         judges = [
-            JudgeConfig(provider=provider, model=OLLAMA_MODEL_JUDGE),
-            JudgeConfig(provider=provider, model=OLLAMA_MODEL_JUDGE),
+            JudgeConfig(provider=default_provider, model=judge_model),
+            JudgeConfig(provider=default_provider, model=judge_model),
         ]
 
         block_thr = float(policy.get("judge_block_confidence_threshold", 0.75))
@@ -102,10 +121,20 @@ Artifact:
             require_consensus_to_allow=require_consensus,
         )
 
-        # Persist judge results
+        # Persist judge results with cost tracking
         for v in ai_review["verdicts"]:
-            _store_model_call(job_id, provider="ollama", model=v["judge"].split(":")[1], role="judge",
-                              request="judge_prompt_hash_only", response=v.get("raw",""), parsed=v.get("parsed") or {})
+            _store_model_call(
+                job_id,
+                provider=v["judge"].split(":")[0],
+                model=v["judge"].split(":")[1] if ":" in v["judge"] else v["judge"],
+                role="judge",
+                request="judge_prompt_hash_only",
+                response=v.get("raw", ""),
+                parsed=v.get("parsed") or {},
+                prompt_tokens=v.get("prompt_tokens", 0),
+                completion_tokens=v.get("completion_tokens", 0),
+                estimated_cost=v.get("estimated_cost_usd", 0.0),
+            )
 
         audit_log(job_id, "judge_done", {"aggregate": ai_review.get("aggregate")})
 
@@ -123,9 +152,10 @@ Artifact:
 
     return {"job_id": job_id, "decision": decision, "findings": findings, "ai_review": ai_review}
 
+
 def summarize_target(root: Path) -> str:
     parts = []
-    allow = {".py",".js",".ts",".md",".yml",".yaml",".json",".env"}
+    allow = {".py", ".js", ".ts", ".md", ".yml", ".yaml", ".json"}
     for p in sorted(root.rglob("*")):
         if p.is_file() and p.suffix in allow:
             try:
@@ -137,8 +167,28 @@ def summarize_target(root: Path) -> str:
             break
     return "\n".join(parts)
 
-def _store_model_call(job_id: str, provider: str, model: str, role: str, request: str, response: str, parsed: dict):
+
+def _store_model_call(
+    job_id: str,
+    provider: str,
+    model: str,
+    role: str,
+    request: str,
+    response: str,
+    parsed: dict,
+    usage=None,
+    prompt_tokens: int = 0,
+    completion_tokens: int = 0,
+    estimated_cost: float = 0.0,
+):
     h = hashlib.sha256(request.encode("utf-8")).hexdigest()
+
+    # Use usage object if provided
+    if usage:
+        prompt_tokens = usage.prompt_tokens
+        completion_tokens = usage.completion_tokens
+        estimated_cost = estimate_cost(model, prompt_tokens, completion_tokens)
+
     with SessionLocal() as db:
         db.add(ModelCall(
             job_id=job_id,
@@ -147,6 +197,9 @@ def _store_model_call(job_id: str, provider: str, model: str, role: str, request
             role=role,
             request_hash=h,
             response_excerpt=(response or "")[:2000],
-            parsed=parsed or {}
+            parsed=parsed or {},
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            estimated_cost_usd=estimated_cost,
         ))
         db.commit()

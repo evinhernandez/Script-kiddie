@@ -3,6 +3,8 @@ rules:
     title: "Model output used directly in network/HTTP request construction"
     category: "agent-security"
     severity: "high"
+    cwe_ids: ["CWE-918"]
+    owasp_ids: ["LLM07"]
     file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
     keywords: ["http", "fetch", "requests"]
     patterns:
@@ -15,6 +17,8 @@ rules:
     title: "Prompt injection: untrusted content appended without separation/quoting"
     category: "agent-security"
     severity: "medium"
+    cwe_ids: ["CWE-74"]
+    owasp_ids: ["LLM01"]
     file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
     patterns:
       - '(system\s*[:=].*\+\s*user_input)'
@@ -26,6 +30,8 @@ rules:
     title: "Long-lived NHI credentials without rotation indicator"
     category: "nhi-security"
     severity: "medium"
+    cwe_ids: ["CWE-798"]
+    owasp_ids: ["LLM07"]
     file_globs: ["**/*.yaml", "**/*.yml", "**/*.json", "**/*.md", "**/*.py", "**/*.ts", "**/*.js"]
     patterns:
       - '\b(token\s*(ttl|expires)\s*[:=]\s*(0|never|infinite))\b'

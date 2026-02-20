@@ -1,0 +1,85 @@
+name: New Rule Proposal
+description: Propose a new detection rule for Script-Kiddie
+title: "[Rule] "
+labels: ["rule-proposal"]
+body:
+  - type: input
+    id: rule_id
+    attributes:
+      label: Rule ID
+      description: "Suggested ID (e.g., SK-CATEGORY-NNN)"
+      placeholder: "SK-XXX-001"
+    validations:
+      required: true
+
+  - type: input
+    id: title
+    attributes:
+      label: Rule Title
+      description: "Short, descriptive title"
+      placeholder: "Unsafe deserialization in model loading"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - low
+        - medium
+        - high
+        - critical
+    validations:
+      required: true
+
+  - type: input
+    id: category
+    attributes:
+      label: Category
+      description: "e.g., llm-security, agent-security, nhi-security, supply-chain"
+      placeholder: "agent-security"
+    validations:
+      required: true
+
+  - type: textarea
+    id: patterns
+    attributes:
+      label: Detection Patterns
+      description: "Regex patterns that should trigger this rule"
+      placeholder: |
+        - 'pattern_one'
+        - 'pattern_two'
+    validations:
+      required: true
+
+  - type: textarea
+    id: message
+    attributes:
+      label: Message
+      description: "What should be displayed when the rule matches?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: remediation
+    attributes:
+      label: Remediation
+      description: "How should users fix the detected issue?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: cwe_owasp
+    attributes:
+      label: CWE/OWASP Mapping
+      description: "Related CWE IDs and OWASP LLM Top 10 entries"
+      placeholder: |
+        CWE: CWE-78
+        OWASP: LLM02
+
+  - type: textarea
+    id: test_cases
+    attributes:
+      label: Test Cases
+      description: "Example code that should and should not trigger this rule"

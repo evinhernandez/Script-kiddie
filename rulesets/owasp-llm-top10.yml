@@ -3,6 +3,8 @@ rules:
     title: "Insecure output handling: model output used in shell/exec"
     category: "llm-security"
     severity: "critical"
+    cwe_ids: ["CWE-78"]
+    owasp_ids: ["LLM02"]
     file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
     keywords: ["os.system", "subprocess", "exec", "eval"]
     patterns:
@@ -16,6 +18,8 @@ rules:
     title: "Potential hardcoded secrets / non-human identity token"
     category: "nhi-security"
     severity: "high"
+    cwe_ids: ["CWE-798"]
+    owasp_ids: ["LLM07"]
     file_globs: ["**/*.py", "**/*.js", "**/*.ts", "**/*.env", "**/*.yaml", "**/*.yml"]
     patterns:
       - '(api[_-]?key\s*[:=]\s*[''"][A-Za-z0-9_\-]{16,}[''"])'
@@ -27,6 +31,8 @@ rules:
     title: "Agent tool invocation without allowlist indicator"
     category: "agent-security"
     severity: "high"
+    cwe_ids: ["CWE-284"]
+    owasp_ids: ["LLM07"]
     file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
     patterns:
       - 'allow\s*all\s*tools'

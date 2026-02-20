@@ -22,7 +22,7 @@ This repo is an **MVP platform** that ships:
 ### 1) Start everything
 ```bash
 cd infra
-docker compose up --build
+POSTGRES_PASSWORD=scriptkiddie REDIS_PASSWORD=scriptkiddie docker compose up -d --build
 ```
 
 ### 2) Pull an Ollama model (first time)
@@ -34,6 +34,27 @@ docker exec -it scriptkiddie-ollama ollama pull llama3.1
 ### 3) Open the UI
 - Web: http://localhost:3000
 - API: http://localhost:8000/health
+
+### 4) Run a test scan from the UI
+1. Open `http://localhost:3000`.
+2. In **Create a scan job**, keep **Target path** as `/workspace` (or enter another allowed in-container path).
+3. Click **Run scan**.
+4. Click **View job →**.
+5. On the job page, watch:
+   - **Status** (queued → running → done)
+   - **Decision** (allow / block / manual_review)
+   - **Findings**
+   - **Model calls** (analyzer + judges)
+6. Click **Download SARIF** to export scan output for CI/code-scanning tools.
+
+### 5) Re-scan after code changes
+If you change source code locally, rebuild the API/worker images so `/workspace` in the containers has the latest code:
+
+```bash
+cd infra
+POSTGRES_PASSWORD=scriptkiddie REDIS_PASSWORD=scriptkiddie docker compose build api worker
+POSTGRES_PASSWORD=scriptkiddie REDIS_PASSWORD=scriptkiddie docker compose up -d api worker
+```
 
 ---
 

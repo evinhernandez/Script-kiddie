@@ -2,7 +2,19 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.egg-info/
+
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+*.sarif
 
 apps/web/.next/
 apps/web/node_modules/
 node_modules/
+
+# Environment files — never commit secrets
+.env
+.env.*
+!.env.example

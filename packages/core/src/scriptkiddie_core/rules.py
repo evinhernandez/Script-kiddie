@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import List
 import yaml
 from pathspec import PathSpec
-from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 from .models import Rule
 
 def load_ruleset(path: str | Path) -> List[Rule]:
@@ -12,7 +11,7 @@ def load_ruleset(path: str | Path) -> List[Rule]:
     return [Rule(**r) for r in data.get("rules", [])]
 
 def _spec(globs: List[str]) -> PathSpec:
-    return PathSpec.from_lines(GitWildMatchPattern, globs)
+    return PathSpec.from_lines("gitignore", globs)
 
 def iter_files(root: Path, include: List[str], exclude: List[str]) -> List[Path]:
     inc = _spec(include or ["**/*"])
@@ -30,4 +29,10 @@ def iter_files(root: Path, include: List[str], exclude: List[str]) -> List[Path]
     return out
 
 def compile_patterns(rule: Rule) -> List[re.Pattern]:
-    return [re.compile(p, flags=re.IGNORECASE | re.MULTILINE) for p in rule.patterns]
+    compiled = []
+    for p in rule.patterns:
+        try:
+            compiled.append(re.compile(p, flags=re.IGNORECASE | re.MULTILINE))
+        except re.error as e:
+            raise ValueError(f"Invalid regex in rule {rule.id}: {p!r} — {e}")
+    return compiled

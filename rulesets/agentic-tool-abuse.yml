@@ -1,0 +1,56 @@
+rules:
+  - id: SK-TOOL-001
+    title: "Unvalidated tool output used in downstream operations"
+    category: "agent-security"
+    severity: "high"
+    cwe_ids: ["CWE-20"]
+    owasp_ids: ["LLM07"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    keywords: ["tool", "result", "output"]
+    patterns:
+      - '\b(tool_result|tool_output|action_result)\b.*\b(exec|eval|subprocess|os\.system)\b'
+      - '\b(exec|eval|subprocess)\b.*\b(tool_result|tool_output|action_result)\b'
+    message: "Tool output is used in code execution without validation."
+    remediation: "Validate and sanitize all tool outputs before using in downstream operations. Never execute tool output directly."
+
+  - id: SK-TOOL-002
+    title: "Recursive agent without depth limit"
+    category: "agent-security"
+    severity: "high"
+    cwe_ids: ["CWE-674"]
+    owasp_ids: ["LLM07"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    keywords: ["agent", "recursive", "loop", "step"]
+    patterns:
+      - '\b(while\s+True|for\s+_\s+in\s+itertools\.count)\b.*\b(agent|llm|model|step|run)\b'
+      - '\bagent.*\b(run|execute|step)\b(?!.*\b(max_steps|max_iterations|depth_limit|max_depth)\b)'
+    message: "Agent may run recursively without a depth or iteration limit."
+    remediation: "Set explicit max_steps/max_iterations. Implement circuit breakers and timeout mechanisms."
+
+  - id: SK-TOOL-003
+    title: "Unsandboxed filesystem access from agent"
+    category: "agent-security"
+    severity: "critical"
+    cwe_ids: ["CWE-22"]
+    owasp_ids: ["LLM07"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    keywords: ["file", "path", "read", "write", "open"]
+    patterns:
+      - '\b(open|read_file|write_file|os\.(remove|unlink|rmdir))\b.*\b(tool|agent|action|llm|model)\b'
+      - '\b(tool|agent|action)\b.*\b(open|read_file|write_file|os\.(remove|unlink|rmdir))\b'
+    message: "Agent has filesystem access without apparent sandboxing."
+    remediation: "Restrict file operations to a sandboxed directory. Validate paths against allowlisted base directories."
+
+  - id: SK-TOOL-004
+    title: "Agent tool with shell command execution"
+    category: "agent-security"
+    severity: "critical"
+    cwe_ids: ["CWE-78"]
+    owasp_ids: ["LLM07"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    keywords: ["shell", "command", "bash", "subprocess"]
+    patterns:
+      - '\b(tool|function|action)\b.*\b(subprocess|os\.system|os\.popen|shell=True)\b'
+      - '\bshell\s*=\s*True\b'
+    message: "Agent tool allows shell command execution."
+    remediation: "Avoid shell execution in agent tools. Use specific APIs instead. If needed, use strict allowlists and sandboxing."

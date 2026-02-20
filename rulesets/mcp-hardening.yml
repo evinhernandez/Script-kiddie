@@ -3,6 +3,8 @@ rules:
     title: "MCP server without auth/ACL indicator"
     category: "mcp-security"
     severity: "high"
+    cwe_ids: ["CWE-306"]
+    owasp_ids: ["LLM07"]
     file_globs: ["**/*.py", "**/*.js", "**/*.ts", "**/*.yaml", "**/*.yml", "**/*.json"]
     patterns:
       - '\b(mcp|model\s*context\s*protocol)\b.*\b(server|serve|listener)\b'
@@ -14,6 +16,8 @@ rules:
     title: "MCP tool exposure: wildcard/allow-all"
     category: "mcp-security"
     severity: "high"
+    cwe_ids: ["CWE-284"]
+    owasp_ids: ["LLM07"]
     file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
     patterns:
       - '\b(allow\s*all\s*tools|tools\s*:\s*\*|tool\s*allowlist\s*:\s*\*)\b'
@@ -24,6 +28,8 @@ rules:
     title: "MCP server bound to 0.0.0.0 without explicit guard"
     category: "mcp-security"
     severity: "medium"
+    cwe_ids: ["CWE-668"]
+    owasp_ids: ["LLM07"]
     file_globs: ["**/*.py", "**/*.js", "**/*.ts", "**/*.yaml", "**/*.yml"]
     patterns:
       - '\b(host|bind)\s*[:=]\s*[''"]0\.0\.0\.0[''"]'

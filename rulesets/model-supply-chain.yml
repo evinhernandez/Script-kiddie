@@ -1,0 +1,55 @@
+rules:
+  - id: SK-SUPPLY-001
+    title: "Untrusted model download URL"
+    category: "supply-chain"
+    severity: "high"
+    cwe_ids: ["CWE-494"]
+    owasp_ids: ["LLM05"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts", "**/*.yml", "**/*.yaml"]
+    keywords: ["model", "download", "url", "http"]
+    patterns:
+      - '\b(model_url|model_path|download_model|from_pretrained)\s*[:=]\s*[''"]https?://(?!huggingface\.co|storage\.googleapis\.com|dl\.fbaipublicfiles\.com)'
+    message: "Model is downloaded from a potentially untrusted URL."
+    remediation: "Download models only from trusted registries. Verify checksums/signatures before loading."
+
+  - id: SK-SUPPLY-002
+    title: "Unsafe deserialization: pickle or torch.load"
+    category: "supply-chain"
+    severity: "critical"
+    cwe_ids: ["CWE-502"]
+    owasp_ids: ["LLM05"]
+    file_globs: ["**/*.py"]
+    keywords: ["pickle", "torch"]
+    patterns:
+      - '\bpickle\.(load|loads)\b'
+      - '\btorch\.load\b(?!.*\bweights_only\s*=\s*True\b)'
+      - '\bjoblib\.load\b'
+    message: "Unsafe deserialization detected. Pickle/torch.load can execute arbitrary code."
+    remediation: "Use safetensors format. If pickle is required, verify file integrity and use torch.load(weights_only=True)."
+
+  - id: SK-SUPPLY-003
+    title: "Missing model signature verification"
+    category: "supply-chain"
+    severity: "medium"
+    cwe_ids: ["CWE-345"]
+    owasp_ids: ["LLM05"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    keywords: ["model", "load", "download"]
+    patterns:
+      - '\b(load_model|from_pretrained|download)\b(?!.*\b(verify|signature|checksum|hash|integrity)\b)'
+    message: "Model loading without apparent signature or integrity verification."
+    remediation: "Verify model checksums or cryptographic signatures before loading."
+
+  - id: SK-SUPPLY-004
+    title: "Unpinned model version"
+    category: "supply-chain"
+    severity: "medium"
+    cwe_ids: ["CWE-1104"]
+    owasp_ids: ["LLM05"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts", "**/*.yml", "**/*.yaml"]
+    keywords: ["model", "version", "latest"]
+    patterns:
+      - '\b(model|model_name|model_id)\s*[:=]\s*[''"][^''"]*:?latest[''"]'
+      - '\b(from_pretrained|load_model)\s*\([''"][^''"]*[''"](?!.*\brevision\b)'
+    message: "Model version appears unpinned — may pull different versions across builds."
+    remediation: "Pin model versions using specific revision hashes or version tags."

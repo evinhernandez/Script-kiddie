@@ -1,0 +1,21 @@
+rules:
+  - id: TEST-001
+    title: "Test rule: hardcoded secret"
+    category: "test"
+    severity: "high"
+    file_globs: ["**/*.py", "**/*.txt"]
+    keywords: ["api_key"]
+    patterns:
+      - 'api_key\s*=\s*[''"][A-Za-z0-9]{12,}[''"]'
+    message: "Hardcoded secret detected."
+    remediation: "Use environment variables instead."
+
+  - id: TEST-002
+    title: "Test rule: eval usage"
+    category: "test"
+    severity: "critical"
+    file_globs: ["**/*.py"]
+    patterns:
+      - '\beval\s*\('
+    message: "eval() usage detected."
+    remediation: "Avoid eval()."

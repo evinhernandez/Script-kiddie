@@ -1,0 +1,53 @@
+rules:
+  - id: SK-EXFIL-001
+    title: "Model output forwarded to external URL"
+    category: "data-security"
+    severity: "high"
+    cwe_ids: ["CWE-200"]
+    owasp_ids: ["LLM06"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    keywords: ["requests", "fetch", "http", "post"]
+    patterns:
+      - '\b(requests\.(post|put)|fetch|axios\.(post|put))\b.*\b(llm|model|completion|response|output|result)\b'
+      - '\b(llm|model|completion|response|output)\b.*\b(requests\.(post|put)|fetch|axios\.(post|put))\b'
+    message: "Model output appears to be forwarded to an external URL."
+    remediation: "Apply egress controls, redact sensitive content from model output before forwarding, and allowlist permitted endpoints."
+
+  - id: SK-EXFIL-002
+    title: "Context forwarded without redaction"
+    category: "data-security"
+    severity: "high"
+    cwe_ids: ["CWE-212"]
+    owasp_ids: ["LLM06"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    keywords: ["context", "prompt", "forward", "send"]
+    patterns:
+      - '\b(forward|send|relay|proxy)\b.*\b(context|prompt|conversation|history|messages)\b(?!.*\b(redact|filter|sanitize|mask)\b)'
+    message: "Conversation context or prompts may be forwarded without redaction."
+    remediation: "Redact PII, secrets, and sensitive context before forwarding to external services."
+
+  - id: SK-EXFIL-003
+    title: "PII logged from model interactions"
+    category: "data-security"
+    severity: "medium"
+    cwe_ids: ["CWE-532"]
+    owasp_ids: ["LLM06"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    keywords: ["log", "print", "debug"]
+    patterns:
+      - '\b(log|logger|print|console\.log)\b.*\b(prompt|user_input|message|completion|response)\b'
+    message: "User input or model output may be logged, potentially exposing PII."
+    remediation: "Avoid logging raw user input or model output. Use structured logging with PII redaction."
+
+  - id: SK-EXFIL-004
+    title: "Model output written to shared/public storage"
+    category: "data-security"
+    severity: "medium"
+    cwe_ids: ["CWE-922"]
+    owasp_ids: ["LLM06"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    keywords: ["s3", "blob", "bucket", "storage", "write"]
+    patterns:
+      - '\b(upload|put_object|write|save)\b.*\b(s3|blob|bucket|storage|public)\b.*\b(llm|model|completion|response|output)\b'
+    message: "Model output may be written to shared or public storage."
+    remediation: "Ensure model outputs stored to cloud storage use private ACLs and encryption at rest."

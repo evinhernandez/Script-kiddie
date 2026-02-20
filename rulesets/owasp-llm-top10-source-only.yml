@@ -1,0 +1,56 @@
+rules:
+  - id: SK-LLM02-001
+    title: "Insecure output handling: model output used in shell/exec"
+    category: "llm-security"
+    severity: "critical"
+    cwe_ids: ["CWE-78"]
+    owasp_ids: ["LLM02"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    exclude_globs:
+      - "apps/web/.next/**"
+      - "**/node_modules/**"
+      - ".venv/**"
+      - "**/.pytest_cache/**"
+    keywords: ["os.system", "subprocess", "exec", "eval"]
+    patterns:
+      - 'os\.system\(.*(llm|model|completion|response).*\)'
+      - 'subprocess\.(run|Popen)\(.*(llm|model|completion|response).*\)'
+      - '\b(eval|exec)\(.*(llm|model|completion|response).*\)'
+    message: "Model output appears to be executed as code/commands."
+    remediation: "Never execute raw model output. Use strict structured outputs, allowlisted command mapping, and validation."
+
+  - id: SK-NHI-001
+    title: "Potential hardcoded secrets / non-human identity token"
+    category: "nhi-security"
+    severity: "high"
+    cwe_ids: ["CWE-798"]
+    owasp_ids: ["LLM07"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts", "**/*.env", "**/*.yaml", "**/*.yml"]
+    exclude_globs:
+      - "apps/web/.next/**"
+      - "**/node_modules/**"
+      - ".venv/**"
+      - "**/.pytest_cache/**"
+    patterns:
+      - '(api[_-]?key\s*[:=]\s*[''"][A-Za-z0-9_\-]{16,}[''"])'
+      - '(bearer\s+[A-Za-z0-9\-\._]{20,})'
+    message: "Looks like a credential or token may be hardcoded."
+    remediation: "Move secrets to env/vault, rotate keys, scope privileges, and prefer workload identity where possible."
+
+  - id: SK-AGENT-TOOLS-001
+    title: "Agent tool invocation without allowlist indicator"
+    category: "agent-security"
+    severity: "high"
+    cwe_ids: ["CWE-284"]
+    owasp_ids: ["LLM07"]
+    file_globs: ["**/*.py", "**/*.js", "**/*.ts"]
+    exclude_globs:
+      - "apps/web/.next/**"
+      - "**/node_modules/**"
+      - ".venv/**"
+      - "**/.pytest_cache/**"
+    patterns:
+      - 'allow\s*all\s*tools'
+      - 'tools\s*=\s*\[\s*\]'
+    message: "Agent tool permissions appear broad or undefined."
+    remediation: "Use explicit tool allowlists, least privilege, and per-tool authorization checks."

@@ -15,6 +15,8 @@ class Rule(BaseModel):
     keywords: List[str] = Field(default_factory=list)
     message: str = ""
     remediation: str = ""
+    cwe_ids: List[str] = Field(default_factory=list)
+    owasp_ids: List[str] = Field(default_factory=list)
 
 class Finding(BaseModel):
     rule_id: str
@@ -26,3 +28,6 @@ class Finding(BaseModel):
     match: str
     message: str = ""
     remediation: str = ""
+    cwe_ids: List[str] = Field(default_factory=list)
+    owasp_ids: List[str] = Field(default_factory=list)
+    fingerprint: str = ""

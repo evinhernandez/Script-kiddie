@@ -6,22 +6,27 @@ def _sarif_level(sev: str) -> str:
     return {"low": "note", "medium": "warning", "high": "error", "critical": "error"}.get(sev, "warning")
 
 def to_sarif(findings: List[Finding]) -> Dict[str, Any]:
-    # Minimal SARIF 2.1.0 suitable for GitHub upload
     rules: Dict[str, Any] = {}
     results: List[Dict[str, Any]] = []
 
     for f in findings:
         if f.rule_id not in rules:
+            tags = []
+            tags.extend(f"CWE-{c}" if not c.startswith("CWE-") else c for c in f.cwe_ids)
+            tags.extend(f.owasp_ids)
+            if f.category:
+                tags.append(f.category)
+
             rules[f.rule_id] = {
                 "id": f.rule_id,
                 "name": f.title,
                 "shortDescription": {"text": f.title},
                 "fullDescription": {"text": f.message or f.title},
                 "help": {"text": f.remediation or "See rule guidance."},
-                "properties": {"severity": f.severity, "category": f.category},
+                "properties": {"severity": f.severity, "category": f.category, "tags": tags},
             }
 
-        results.append({
+        result: Dict[str, Any] = {
             "ruleId": f.rule_id,
             "level": _sarif_level(f.severity),
             "message": {"text": f.message or f.title},
@@ -30,8 +35,15 @@ def to_sarif(findings: List[Finding]) -> Dict[str, Any]:
                     "artifactLocation": {"uri": f.file},
                     "region": {"startLine": f.line},
                 }
-            }]
-        })
+            }],
+        }
+
+        if f.fingerprint:
+            result["partialFingerprints"] = {
+                "primaryLocationLineHash": f.fingerprint,
+            }
+
+        results.append(result)
 
     return {
         "version": "2.1.0",

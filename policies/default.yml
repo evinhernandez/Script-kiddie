@@ -12,3 +12,10 @@ policy:
 
   # Output decision ordering
   decisions: ["block", "manual_review", "allow"]
+
+  # Per-rule overrides (optional)
+  # rule_overrides:
+  #   - rule_id: SK-NHI-001
+  #     action: warn          # block | warn | suppress
+  #     severity_override: medium
+  #     reason: "Accepted risk for dev environment"

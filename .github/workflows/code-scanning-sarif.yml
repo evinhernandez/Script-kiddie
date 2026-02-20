@@ -1,0 +1,41 @@
+name: "Script-Kiddie Self-Scan"
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1"  # Weekly Monday 6am UTC
+
+permissions:
+  security-events: write
+
+jobs:
+  self-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Script-Kiddie
+        run: |
+          pip install -e packages/core -e packages/cli
+
+      - name: Run scan (all rulesets)
+        run: |
+          scriptkiddie scan \
+            --root . \
+            --ruleset rulesets/*.yml \
+            --out script-kiddie.sarif \
+            --format sarif
+
+      - name: Upload SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: script-kiddie.sarif
+          category: script-kiddie

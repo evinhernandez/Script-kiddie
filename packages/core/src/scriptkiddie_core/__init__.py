@@ -1,3 +1,3 @@
-__all__ = ["scan", "to_sarif"]
-from .scanner import scan
+__all__ = ["scan", "scan_multi", "to_sarif"]
+from .scanner import scan, scan_multi
 from .sarif import to_sarif

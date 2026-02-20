@@ -8,8 +8,14 @@ version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = []
 
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-cov>=5.0"]
+
 [project.scripts]
 scriptkiddie = "scriptkiddie_cli.main:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/scriptkiddie_cli"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

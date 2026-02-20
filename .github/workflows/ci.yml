@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - run: ruff check .
+      - run: ruff format --check .
+
+  test-core:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e "packages/core[dev]"
+      - run: pytest packages/core/tests -v --tb=short --cov=scriptkiddie_core --cov-report=term-missing
+
+  test-model-gateway:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e "packages/model_gateway[dev]"
+      - run: pytest packages/model_gateway/tests -v --tb=short --cov=model_gateway --cov-report=term-missing
+
+  test-cli:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e "packages/core[dev]" -e "packages/cli[dev]"
+      - run: pytest packages/cli/tests -v --tb=short --cov=scriptkiddie_cli --cov-report=term-missing
+
+  test-api:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e "packages/core" -e "packages/model_gateway" -e "apps/api[dev]"
+      - run: pytest apps/api/tests -v --tb=short --cov=app --cov-report=term-missing
+
+  validate-rulesets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e packages/core -e packages/cli
+      - name: Validate all rulesets
+        run: |
+          for f in rulesets/*.yml; do
+            echo "Validating $f..."
+            scriptkiddie validate-ruleset "$f"
+          done
+      - name: Validate policy
+        run: scriptkiddie validate-policy policies/default.yml

@@ -22,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <nav className="flex gap-4 text-sm">
               <a href="/">Dashboard</a>
               <a href="/jobs">Jobs</a>
+              <a href="/analytics">Analytics</a>
               <a href="/snippets">Snippets</a>
             </nav>
           </header>
